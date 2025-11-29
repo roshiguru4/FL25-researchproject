@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Debate Experiment</title>
+
+<style>
+:root {
+  --bg:#f9fafc; --ink:#111; --muted:#666; --accent:#2563eb;
+  --bubbleA:#eaf1ff; --bubbleB:#eafbea;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); font-family:'Inter',sans-serif; color:var(--ink); }
+
+header {
+  background:white;
+  border-bottom:1px solid #eee;
+  padding:16px 22px;
+  font-weight:700;
+  font-size:20px;
+}
+
+/* SECTION CARDS */
+.container {
+  max-width:900px;
+  margin:30px auto;
+  background:white;
+  padding:28px;
+  border-radius:14px;
+  box-shadow:0 1px 8px rgba(0,0,0,0.06);
+  line-height:1.65;
+}
+
+/* CODE BLOCKS */
+.codebox {
+  background:#f3f4f6;
+  padding:12px 16px;
+  border-radius:8px;
+  font-family:ui-monospace, monospace;
+  white-space:pre-wrap;
+}
+
+.solutions {
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:24px;
+  margin-top:20px;
+}
+
+.code-snippet {
+  background:#1e1e1e;
+  color:#ddd;
+  padding:16px;
+  width:420px;
+  border-radius:12px;
+  position:relative;
+  font-family:ui-monospace, monospace;
+}
+
+.run-btn {
+  position:absolute;
+  right:12px;
+  top:12px;
+  background:var(--accent);
+  color:white;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+.result {
+  margin-top:8px;
+  color:#eee;
+  min-height:16px;
+  font-size:13px;
+}
+
+/* CHAT */
+.chat {
+  margin-top:35px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+
+.message {
+  max-width:70%;
+  opacity:0;
+  transform:translateY(16px);
+  transition:0.45s ease;
+}
+
+.message.a { align-self:flex-start; }
+.message.b { align-self:flex-end; }
+
+.bubble {
+  padding:14px 18px;
+  border-radius:18px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.05);
+  line-height:1.6;
+  font-size:15px;
+}
+
+.message.a .bubble { background:var(--bubbleA); }
+.message.b .bubble { background:var(--bubbleB); }
+
+.speaker {
+  font-weight:700;
+  font-size:12px;
+  color:#555;
+  margin-bottom:4px;
+}
+
+#typingIndicator {
+  display:none;
+  text-align:center;
+  font-size:13px;
+  color:#888;
+}
+
+/* BUTTON */
+.btn {
+  background:var(--accent);
+  color:white;
+  padding:12px 24px;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  margin-top:25px;
+  font-size:15px;
+  font-weight:600;
+}
+.btn:hover { background:#1f45d3; }
+
+/* SURVEY */
+.survey {
+  margin-top:40px;
+  padding-top:20px;
+  border-top:1px solid #eee;
+}
+
+.q {
+  margin:18px 0;
+}
+
+.qtext {
+  font-weight:600;
+  margin-bottom:6px;
+}
+
+.likert label {
+  margin-right:10px;
+}
+</style>
+</head>
+<body>
+
+<header>AI Debate Experiment</header>
+
+<!-- INSTRUCTIONS -->
+<div class="container" id="instructionsSection">
+  <h2>Welcome</h2>
+  <p>This experiment investigates <strong>how judges with different levels of programming or problem-solving experience evaluate debates between AI models</strong>.  
+  Our research question is:</p>
+
+  <blockquote><strong>
+  “How do different levels of judge experience influence judge accuracy for more capable debating LLM models?”
+  </strong></blockquote>
+
+  <p>You will:</p>
+  <ul>
+    <li>Read a coding problem.</li>
+    <li>Compare two AI-generated solutions (A and B).</li>
+    <li>Optionally view simulated test results (“verifiable evidence”).</li>
+    <li>Watch a short debate between two AI debaters.</li>
+    <li>Answer a brief 5-question survey about how helpful each debater and the evidence were.</li>
+  </ul>
+
+  <button class="btn" onclick="startExperiment()">Start</button>
+</div>
+
+
+<!-- FULL EXPERIMENT PAGE (EVERYTHING BELOW ON SAME PAGE) -->
+<div class="container" id="experimentSection" style="display:none;">
+
+  <!-- PROBLEM STATEMENT -->
+  <h3>Problem</h3>
+  <p><strong>Valid Parentheses</strong></p>
+  <pre class="codebox">
+Input:
+s = "({[]})"
+
+Expected Output:
+True
+  </pre>
+
+  <!-- SOLUTIONS -->
+  <div class="solutions">
+
+    <!-- SOLUTION A -->
+    <div class="code-snippet">
+      <h4>Solution A</h4>
+<pre>
+def isValid(s):
+    pairs = {'(': ')', '[': ']', '{': '}'}
+    stack = []
+    for ch in s:
+        if ch in pairs:
+            stack.append(ch)
+        elif not stack or pairs[stack.pop()] != ch:
+            return False
+    return not stack
+</pre>
+      <button class="run-btn" onclick="runCode('A')">Run Code</button>
+      <div class="result" id="resA"></div>
+    </div>
+
+    <!-- SOLUTION B -->
+    <div class="code-snippet">
+      <h4>Solution B</h4>
+<pre>
+def isValid(s):
+    stack = []
+    for ch in s:
+        if ch in '([{':
+            stack.append(ch)
+        else:
+            if not stack: return False
+            top = stack.pop()
+            if top=='(' and ch!=')': return False
+            if top=='[' and ch!=']': return False
+            if top=='{' and ch!='}': return False
+    return True
+</pre>
+      <button class="run-btn" onclick="runCode('B')">Run Code</button>
+      <div class="result" id="resB"></div>
+    </div>
+
+  </div>
+
+  <!-- DEBATE (ALSO ON THIS PAGE) -->
+  <h3 style="margin-top:40px;">Debate</h3>
+
+  <div class="chat" id="debateChat">
+
+    <div class="message a">
+      <div class="speaker">Debater A</div>
+      <div class="bubble">Solution A handles mismatches and empty stack issues cleanly using a unified mapping.</div>
+    </div>
+
+    <div class="message b">
+      <div class="speaker">Debater B</div>
+      <div class="bubble">Solution B is explicit per bracket type. Although longer, its logic is very transparent.</div>
+    </div>
+
+    <div class="message a">
+      <div class="speaker">Debater A</div>
+      <div class="bubble">But Solution B forgets to verify the stack is empty at the end, which breaks cases like "(((". </div>
+    </div>
+
+    <div class="message b">
+      <div class="speaker">Debater B</div>
+      <div class="bubble">True — adding <code>return not stack</code> would fix it. As written, Solution A is more robust.</div>
+    </div>
+
+  </div>
+
+  <div id="typingIndicator">Debater is typing...</div>
+  <button class="btn" id="nextBubbleBtn" onclick="revealNextBubble()">Next</button>
+
+  <!-- SURVEY (APPEARS AFTER LAST BUBBLE ON SAME PAGE) -->
+  <div class="survey" id="surveySection" style="display:none;">
+    <h3>Post-Task Survey</h3>
+
+    <div class="q">
+      <div class="qtext">1) How useful was Debater A’s explanation?</div>
+      <label><input type="radio" name="q1" value="1">1</label>
+      <label><input type="radio" name="q1" value="2">2</label>
+      <label><input type="radio" name="q1" value="3">3</label>
+      <label><input type="radio" name="q1" value="4">4</label>
+      <label><input type="radio" name="q1" value="5">5</label>
+    </div>
+
+    <div class="q">
+      <div class="qtext">2) How useful was Debater B’s explanation?</div>
+      <label><input type="radio" name="q2" value="1">1</label>
+      <label><input type="radio" name="q2" value="2">2</label>
+      <label><input type="radio" name="q2" value="3">3</label>
+      <label><input type="radio" name="q2" value="4">4</label>
+      <label><input type="radio" name="q2" value="5">5</label>
+    </div>
+
+    <div class="q">
+      <div class="qtext">3) How much did verifiable evidence (tests/Runs) help you evaluate correctness?</div>
+      <label><input type="radio" name="q3" value="1">1</label>
+      <label><input type="radio" name="q3" value="2">2</label>
+      <label><input type="radio" name="q3" value="3">3</label>
+      <label><input type="radio" name="q3" value="4">4</label>
+      <label><input type="radio" name="q3" value="5">5</label>
+    </div>
+
+    <div class="q">
+      <div class="qtext">4) How much did evidence strengthen Debater A’s argument?</div>
+      <label><input type="radio" name="q4" value="1">1</label>
+      <label><input type="radio" name="q4" value="2">2</label>
+      <label><input type="radio" name="q4" value="3">3</label>
+      <label><input type="radio" name="q4" value="4">4</label>
+      <label><input type="radio" name="q4" value="5">5</label>
+    </div>
+
+    <div class="q">
+      <div class="qtext">5) How much did evidence strengthen Debater B’s argument?</div>
+      <label><input type="radio" name="q5" value="1">1</label>
+      <label><input type="radio" name="q5" value="2">2</label>
+      <label><input type="radio" name="q5" value="3">3</label>
+      <label><input type="radio" name="q5" value="4">4</label>
+      <label><input type="radio" name="q5" value="5">5</label>
+    </div>
+
+    <button class="btn" onclick="finish()">Submit</button>
+  </div>
+
+</div>
+
+<!-- FINAL THANK YOU -->
+<div class="container" id="thankYou" style="display:none;">
+  <h2>Thank you!</h2>
+  <p>Your responses have been recorded.</p>
+</div>
+
+<script>
+function startExperiment() {
+  document.getElementById("instructionsSection").style.display = "none";
+  document.getElementById("experimentSection").style.display = "block";
+}
+
+/* RUN CODE */
+function runCode(id) {
+  const out = {
+    A:"✔ Output: True\n✔ Handles edge cases\n✔ Final check included",
+    B:"✔ Output: True\n✘ Missing final stack check"
+  };
+  document.getElementById("res"+id).innerHTML = out[id].replace(/\n/g,"<br>");
+}
+
+/* DEBATE FLOW */
+let bubbleIdx = 0;
+const bubbles = document.querySelectorAll('#debateChat .message');
+const typing = document.getElementById("typingIndicator");
+
+function revealNextBubble() {
+  if (bubbleIdx < bubbles.length) {
+    typing.style.display = "block";
+    setTimeout(() => {
+      typing.style.display = "none";
+      const m = bubbles[bubbleIdx];
+      m.style.opacity = "1";
+      m.style.transform = "translateY(0)";
+      bubbleIdx++;
+
+      if (bubbleIdx === bubbles.length) {
+        document.getElementById("nextBubbleBtn").style.display = "none";
+        document.getElementById("surveySection").style.display = "block";
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      }
+    }, 500);
+  }
+}
+
+function finish() {
+  document.getElementById("experimentSection").style.display = "none";
+  document.getElementById("thankYou").style.display = "block";
+}
+</script>
+
+</body>
+</html>
